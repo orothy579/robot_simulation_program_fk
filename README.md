@@ -32,4 +32,4 @@
 
 ## 이미지
 
-![실행 화면](Screenshot 2025-07-11 at 3.58.15 PM.png)
+![실행 화면](./Screenshot 2025-07-11 at 3.58.15 PM.png)
