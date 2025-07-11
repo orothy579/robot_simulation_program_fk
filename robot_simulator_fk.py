@@ -1,10 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib.widgets import Slider, Button
+from matplotlib.widgets import Slider
 from scipy.spatial.transform import Rotation as R
-
-
 
 # dht
 def dh_transform(theta, d, a, alpha):
@@ -28,7 +25,6 @@ def dh_transform(theta, d, a, alpha):
         ]
     )
 
-
 # FK
 def forward_kinematics(theta_list, a, d, alpha):
     """Calculate the forward kinematics to get end effector position."""
@@ -39,7 +35,6 @@ def forward_kinematics(theta_list, a, d, alpha):
         T = T @ T_i  # Combine transformations
         positions.append(T[:3, 3])  # Append the position of the end effector
     return T, positions
-
 
 # axes limit setting
 def init_axes(ax):
@@ -76,14 +71,13 @@ ax.set_title("3D visualization of Robotic Arm")
 # plot robot
 T, init_ee_pos = forward_kinematics(init_thetas, a, d, alpha)
 init_ee_pos = np.array(init_ee_pos)
-print(init_ee_pos)
 line = ax.plot(init_ee_pos[:, 0], init_ee_pos[:, 1], init_ee_pos[:, 2], "-o", lw=2)[0]
 start_marker = ax.scatter(init_ee_pos[0, 0], init_ee_pos[0, 1], init_ee_pos[0, 2], color="red", marker="o", s=50)
 end_marker = ax.scatter(
     init_ee_pos[-1, 0], init_ee_pos[-1, 1], init_ee_pos[-1, 2],
     color="green", marker="o", s=50
 )
-txt = ax.text2D(0.02, 0.95, "", transform=ax.transAxes)
+txt = ax.text2D(0.25, 0.95, "", transform=ax.transAxes)
 
 # sliders
 sliders = []
