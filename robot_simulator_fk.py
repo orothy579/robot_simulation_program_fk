@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.widgets import Slider, Button
+from scipy.spatial.transform import Rotation as R
+
 
 
 # dht
@@ -39,11 +41,16 @@ def forward_kinematics(theta_list, a, d, alpha):
     return T, positions
 
 
-# 축 범위 지정
+# axes limit setting
 def init_axes(ax):
     ax.set_xlim(-1, 1)
     ax.set_ylim(-1, 1)
     ax.set_zlim(0, 1.4)
+
+# from 3x3 rot mat to euler
+def to_euler(mat):
+    r = R.from_matrix(mat)
+    return r.as_euler('xyz', degrees=True)  # roll, pitch, yaw
 
 
 # 변수 정의
@@ -67,24 +74,44 @@ ax.set_zlabel("Z-axis")
 ax.set_title("3D visualization of Robotic Arm")
 
 # plot robot
-init_ee_pos = forward_kinematics(init_thetas, a, d, alpha)
-line = ax.plot(init_ee_pos[:, 0], init_ee_pos[:, 1], init_ee_pos[:, 2], "-o", lw=2)
+T, init_ee_pos = forward_kinematics(init_thetas, a, d, alpha)
+init_ee_pos = np.array(init_ee_pos)
+print(init_ee_pos)
+line = ax.plot(init_ee_pos[:, 0], init_ee_pos[:, 1], init_ee_pos[:, 2], "-o", lw=2)[0]
+start_marker = ax.scatter(init_ee_pos[0, 0], init_ee_pos[0, 1], init_ee_pos[0, 2], color="red", marker="o", s=50)
+end_marker = ax.scatter(
+    init_ee_pos[-1, 0], init_ee_pos[-1, 1], init_ee_pos[-1, 2],
+    color="green", marker="o", s=50
+)
 txt = ax.text2D(0.02, 0.95, "", transform=ax.transAxes)
 
 # sliders
 sliders = []
 for i in range(6):
     slider = fig.add_axes([0.35, 0.25 - i * 0.03, 0.3, 0.02])
-    sliders.append(Slider(slider, f"Theta {i+1}", -np.pi, np.pi, valinit=0))
+    sliders.append(Slider(slider, f"Theta {i+1}", -180, 180, valinit=0, valfmt="%1.1f"))
 
 
 def update(_):
-    thetas = [s.val for s in sliders]
-    T, ee_pos = forward_kinematics(thetas, a, d, alpha)
-    line.set_data(ee_pos[:, 0], ee_pos[:, 1])
-    line.set_3d_properties(ee_pos[:, 2])
+    deg_thetas = [s.val for s in sliders]
+    rad_thetas = np.radians(deg_thetas)
+    T, ee_pos = forward_kinematics(rad_thetas, a, d, alpha)
+    ee_pos = np.array(ee_pos)
+    line.set_data(ee_pos[:,0], ee_pos[:,1])
+    line.set_3d_properties(ee_pos[:,2])
+    
+    end_marker._offsets3d = (
+        [ee_pos[-1, 0]],
+        [ee_pos[-1, 1]],
+        [ee_pos[-1, 2]]
+    )
+    
+    rot_mat = T[:3, :3]
+    r,p,y = to_euler(rot_mat)
+
     txt.set_text(
-        f"EE: x={ee_pos[-1, 0]:.3f}, y={ee_pos[-1, 1]:.3f}, z={ee_pos[-1, 2]:.3f}"
+        f"Pos: x={ee_pos[-1, 0]:.3f}, y={ee_pos[-1, 1]:.3f}, z={ee_pos[-1, 2]:.3f}\n"
+        f"Ori: roll={r:.1f}, pitch={p:.1f}, yaw={y:.1f}"
     )
     fig.canvas.draw_idle()
 
